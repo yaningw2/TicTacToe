@@ -6,7 +6,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class GamePage extends AppCompatActivity {
@@ -17,7 +21,7 @@ public class GamePage extends AppCompatActivity {
      * Attempts to play on any occupied spots should trigger error message to show"I don't know?".
      */
     public static int[][] board;
-
+    private List<Moves> moves;
     private ImageButton button01;
     private ImageButton button02;
     private ImageButton button00;
@@ -27,9 +31,10 @@ public class GamePage extends AppCompatActivity {
     private ImageButton button20;
     private ImageButton button21;
     private ImageButton button22;
-
+    private TextView showWhoseTurn;
     private String firstName;
     private String secondName;
+
     /**
      * this function makes the move.
      * it should check whether this spot is already occupied.
@@ -46,7 +51,10 @@ public class GamePage extends AppCompatActivity {
             return false;
         } else {
             board[x][y] = whoseMove();
-            checkWin();
+            if (checkWin()) {
+                return true;
+            }
+            setShowWhoseTurn();
             return true;
         }
     }
@@ -59,6 +67,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button00.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(0, 0, board[0][0]));
         }
     }
     public void play01(View view) {
@@ -68,6 +77,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button01.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(0, 1, board[0][1]));
         }
     }
     public void play02(View view) {
@@ -77,6 +87,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button02.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(0, 2, board[0][2]));
         }
     }
     public void play10(View view) {
@@ -86,6 +97,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button10.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(1, 0, board[1][0]));
         }
     }
     public void play11(View view) {
@@ -95,6 +107,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button11.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(1, 1, board[1][1]));
         }
     }
     public void play12(View view) {
@@ -104,6 +117,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button12.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(1, 2, board[1][2]));
         }
     }
     public void play20(View view) {
@@ -113,6 +127,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button20.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(2, 0, board[2][0]));
         }
     }
     public void play21(View view) {
@@ -122,6 +137,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button21.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(2, 1, board[2][1]));
         }
     }
     public void play22(View view) {
@@ -131,6 +147,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button22.setImageResource(R.color.orange);
             }
+            moves.add(0, new Moves(2, 2, board[2][2]));
         }
     }
 
@@ -178,8 +195,9 @@ public class GamePage extends AppCompatActivity {
         }
     }
 
-    private void checkWin() {
+    private boolean checkWin() {
         Intent intent = new Intent(this, Winner.class);
+        boolean end = false;
         for (int i = 0; i < board.length; i++) {
             if (board[i][0] != 0) {
                 if (board[i][0] == board[i][1] && board[i][0] == board[i][2]) {
@@ -189,6 +207,7 @@ public class GamePage extends AppCompatActivity {
                         intent.putExtra("winner", secondName);
                     }
                     startActivity(intent);
+                    end = true;
                 }
             }
             if (board[0][i] != 0) {
@@ -199,9 +218,23 @@ public class GamePage extends AppCompatActivity {
                         intent.putExtra("winner", secondName);
                     }
                     startActivity(intent);
+                    end = true;
                 }
             }
         }
+        if (board[1][1] != 0) {
+            if (board[0][0] == board[1][1] && board[1][1] == board[2][2]
+                    || board[2][0] == board[1][1] && board[1][1] == board[0][2]) {
+                if (board[1][1] == 1) {
+                    intent.putExtra("winner", firstName);
+                } else {
+                    intent.putExtra("winner", secondName);
+                }
+                startActivity(intent);
+                end = true;
+            }
+        }
+        return end;
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,12 +250,69 @@ public class GamePage extends AppCompatActivity {
         button20 = findViewById(R.id.button20);
         button21 = findViewById(R.id.button21);
         button22 = findViewById(R.id.button22);
-        firstName = getIntent().getStringExtra("first");
-        secondName = getIntent().getStringExtra("second");
+        firstName = MainActivity.first;
+        secondName = MainActivity.second;
+        //create a list of moves for the convenience of undo and redo
+        moves = new ArrayList();
         //initialise my board here. and also set it up.
         board = new int[3][3];
         setUpBoard(board);
         //let function firstMove() decide who plays first by changing int whoseTurn.
         whoseTurn = firstMove();
+        showWhoseTurn = findViewById(R.id.showWhoseTurn);
+        setShowWhoseTurn();
     }
+
+    public void setShowWhoseTurn() {
+        if (whoseTurn == 1) {
+            showWhoseTurn.setText(firstName + " Plays");
+        } else {
+            showWhoseTurn.setText(secondName + " Plays");
+        }
+    }
+
+    public void undo(View view) {
+        try {
+            int i = moves.get(0).getI();
+            int j = moves.get(0).getJ();
+            String coordinate = "" + i + j;
+            switch (coordinate) {
+                case "00":
+                    button00.setImageResource(R.color.blankspot);
+                    break;
+                case "01":
+                    button01.setImageResource(R.color.blankspot);
+                    break;
+                case "02":
+                    button02.setImageResource(R.color.blankspot);
+                    break;
+                case "10":
+                    button10.setImageResource(R.color.blankspot);
+                    break;
+                case "11":
+                    button11.setImageResource(R.color.blankspot);
+                    break;
+                case "12":
+                    button12.setImageResource(R.color.blankspot);
+                    break;
+                case "20":
+                    button20.setImageResource(R.color.blankspot);
+                    break;
+                case "21":
+                    button21.setImageResource(R.color.blankspot);
+                    break;
+                case "22":
+                    button22.setImageResource(R.color.blankspot);
+                    break;
+            }
+            board[i][j] = 0;
+            whoseMove();
+            setShowWhoseTurn();
+            moves.remove(0);
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), "I CAN'T DO THAT, DAVID",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
 }
