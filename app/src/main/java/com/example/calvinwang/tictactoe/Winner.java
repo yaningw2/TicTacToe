@@ -22,23 +22,6 @@ public class Winner extends AppCompatActivity {
         TextView winnerName = findViewById(R.id.winnerName);
         message = winner.toUpperCase() + " WINS!!!";
         winnerName.setText(message);
-
-        mTTs = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                    int result = mTTs.setLanguage(Locale.ENGLISH);
-                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Log.e("TTS", "Language not supported");
-                    } else {
-                        mTTs.speak(message + "Congratulations", TextToSpeech.QUEUE_FLUSH, null);
-                    }
-                } else {
-                    Log.e("TTS", "Initialization failed.");
-                }
-
-            }
-        });
     }
 
     public void goToGame(View view) {

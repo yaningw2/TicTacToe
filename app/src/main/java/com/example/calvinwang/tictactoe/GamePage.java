@@ -1,8 +1,10 @@
 package com.example.calvinwang.tictactoe;
 
 import android.content.Intent;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -11,6 +13,7 @@ import android.widget.Toast;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Random;
 
 public class GamePage extends AppCompatActivity {
@@ -67,7 +70,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button00.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(0, 0, board[0][0]));
+            moves.add(new Moves(button00));
         }
     }
     public void play01(View view) {
@@ -77,7 +80,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button01.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(0, 1, board[0][1]));
+            moves.add(new Moves(button01));
         }
     }
     public void play02(View view) {
@@ -87,7 +90,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button02.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(0, 2, board[0][2]));
+            moves.add(new Moves(button02));
         }
     }
     public void play10(View view) {
@@ -97,7 +100,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button10.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(1, 0, board[1][0]));
+            moves.add(new Moves(button10));
         }
     }
     public void play11(View view) {
@@ -107,7 +110,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button11.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(1, 1, board[1][1]));
+            moves.add(new Moves(button11));
         }
     }
     public void play12(View view) {
@@ -117,7 +120,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button12.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(1, 2, board[1][2]));
+            moves.add(new Moves(button12));
         }
     }
     public void play20(View view) {
@@ -127,7 +130,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button20.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(2, 0, board[2][0]));
+            moves.add(new Moves(button20));
         }
     }
     public void play21(View view) {
@@ -137,7 +140,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button21.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(2, 1, board[2][1]));
+            moves.add(new Moves(button21));
         }
     }
     public void play22(View view) {
@@ -147,7 +150,7 @@ public class GamePage extends AppCompatActivity {
             } else {
                 button22.setImageResource(R.color.orange);
             }
-            moves.add(0, new Moves(2, 2, board[2][2]));
+            moves.add(new Moves(button22));
         }
     }
 
@@ -261,6 +264,25 @@ public class GamePage extends AppCompatActivity {
         whoseTurn = firstMove();
         showWhoseTurn = findViewById(R.id.showWhoseTurn);
         setShowWhoseTurn();
+        final Button unDo = findViewById(R.id.unDo);
+        mTTs = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    int result = mTTs.setLanguage(Locale.ENGLISH);
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("TTS", "Language not supported");
+                    } else {
+                        mTTs.speak("Let's go boys", TextToSpeech.QUEUE_FLUSH, null);
+                        unDo.setEnabled(true);
+                    }
+                } else {
+                    Log.e("TTS", "Initialization failed.");
+                }
+
+            }
+        });
+
     }
 
     public void setShowWhoseTurn() {
@@ -271,47 +293,19 @@ public class GamePage extends AppCompatActivity {
         }
     }
 
+    private TextToSpeech mTTs;
+
     public void undo(View view) {
         try {
-            int i = moves.get(0).getI();
-            int j = moves.get(0).getJ();
-            String coordinate = "" + i + j;
-            switch (coordinate) {
-                case "00":
-                    button00.setImageResource(R.color.blankspot);
-                    break;
-                case "01":
-                    button01.setImageResource(R.color.blankspot);
-                    break;
-                case "02":
-                    button02.setImageResource(R.color.blankspot);
-                    break;
-                case "10":
-                    button10.setImageResource(R.color.blankspot);
-                    break;
-                case "11":
-                    button11.setImageResource(R.color.blankspot);
-                    break;
-                case "12":
-                    button12.setImageResource(R.color.blankspot);
-                    break;
-                case "20":
-                    button20.setImageResource(R.color.blankspot);
-                    break;
-                case "21":
-                    button21.setImageResource(R.color.blankspot);
-                    break;
-                case "22":
-                    button22.setImageResource(R.color.blankspot);
-                    break;
-            }
-            board[i][j] = 0;
+            ImageButton button = moves.get(0).button;
+            button.setImageResource(R.color.blankspot);
             whoseMove();
             setShowWhoseTurn();
             moves.remove(0);
         } catch (Exception e) {
             Toast.makeText(getApplicationContext(), "I CAN'T DO THAT, DAVID",
                     Toast.LENGTH_LONG).show();
+            mTTs.speak("You can not undo any more", TextToSpeech.QUEUE_FLUSH, null);
         }
     }
 
